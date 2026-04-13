@@ -801,6 +801,8 @@ function showView(name){
   document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
   document.getElementById('sb-home')?.classList.toggle('active', name==='home');
   document.getElementById('sb-papers')?.classList.toggle('active', name==='papers');
+  const ll = document.getElementById('litrev-link');
+  if(ll) ll.style.display = name==='home' ? 'flex' : 'none';
   window.scrollTo(0,0);
   if(name==='flashcards'){ buildTabs('fc-tabs',currentCat,'initFC'); initFC(0); }
   if(name==='fill')      { buildTabs('fib-tabs',currentCat,'initFib'); initFib(0); }
