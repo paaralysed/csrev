@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSRev</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2316a34a'/%3E%3Crect x='6' y='9' width='20' height='14' rx='2' fill='none' stroke='white' stroke-width='1.5'/%3E%3Cpath d='M10 14 L14 18 L10 22' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cline x1='16' y1='22' x2='22' y2='22' stroke='white' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f2fbf5;--bg2:#ffffff;--bg3:#e8f7ee;--surface:#d0edda;
+  --border:rgba(22,163,74,0.15);--border2:rgba(22,163,74,0.3);
+  --text:#0f2318;--muted:#3d6b50;--faint:#9dc4ad;
+  --blue:#16a34a;--blue2:#15803d;--bluelight:#dcfce7;
+  --red:#dc2626;--green:#16a34a;
+  --sidebar-w:260px;
+}
+body.dark {
+  --bg:#0a1410;--bg2:#0f1f17;--bg3:#122018;--surface:#1a3026;
+  --border:rgba(22,163,74,0.12);--border2:rgba(22,163,74,0.25);
+  --text:#c8f0d8;--muted:#5a9470;--faint:#1e3828;
+  --blue:#4ade80;--blue2:#86efac;--bluelight:#0f2318;
+  --red:#f87171;--green:#4ade80;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;overflow-x:hidden;}
+
+/* ── TOPBAR ── */
+#topbar {
+  position:fixed;top:0;left:0;right:0;height:52px;z-index:200;
+  background:rgba(242,251,245,0.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 1.25rem;gap:0.75rem;
+}
+body.dark #topbar { background:rgba(10,20,16,0.92); }
+.topbar-logo {
+  font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--blue);
+  letter-spacing:0.01em;text-decoration:none;cursor:pointer;
+  display:flex;align-items:center;gap:6px;
+}
+.topbar-logo em{font-style:italic;color:var(--text);}
+.topbar-spacer{flex:1;}
+.icon-btn {
+  width:34px;height:34px;border-radius:8px;border:1px solid var(--border2);
+  background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:var(--muted);transition:all 0.15s;
+}
+.icon-btn:hover{background:var(--bg3);color:var(--text);}
+.hamburger{flex-direction:column;gap:4px;padding:8px;}
+.hamburger span{display:block;width:16px;height:1.5px;background:var(--muted);border-radius:2px;transition:all 0.2s;}
+
+/* ── SIDEBAR ── */
+#sidebar {
+  position:fixed;top:52px;left:0;bottom:0;width:var(--sidebar-w);
+  background:var(--bg2);border-right:1px solid var(--border);
+  z-index:150;overflow-y:auto;
+  transform:translateX(-100%);transition:transform 0.25s cubic-bezier(.4,0,.2,1);
+  padding:1.25rem 0 2rem;
+}
+#sidebar.open{transform:translateX(0);}
+#sidebar-overlay {
+  display:none;position:fixed;inset:0;top:52px;background:rgba(0,0,0,0.18);
+  z-index:140;backdrop-filter:blur(2px);
+}
+#sidebar-overlay.show{display:block;}
+
+.sb-section{padding:0.25rem 0 0.75rem;}
+.sb-label{font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--faint);padding:0 1.25rem;margin-bottom:0.25rem;display:block;}
+.sb-item {
+  display:flex;align-items:center;gap:10px;width:100%;
+  padding:0.55rem 1.25rem;background:none;border:none;
+  font-family:'Inter',sans-serif;font-size:0.82rem;font-weight:400;
+  color:var(--muted);cursor:pointer;transition:all 0.12s;text-align:left;
+}
+.sb-item:hover{color:var(--text);background:var(--bg3);}
+.sb-item.active{color:var(--blue);background:var(--bluelight);font-weight:500;}
+.sb-item .sb-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0;}
+.sb-divider{height:1px;background:var(--border);margin:0.5rem 1.25rem;}
+.sb-cat-toggle {
+  display:flex;align-items:center;gap:8px;width:100%;
+  padding:0.45rem 1.25rem;background:none;border:none;
+  font-family:'Inter',sans-serif;font-size:0.7rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:0.08em;
+  color:var(--muted);cursor:pointer;transition:color 0.12s;
+}
+.sb-cat-toggle:hover{color:var(--text);}
+.sb-cat-toggle .arrow{font-size:9px;margin-left:auto;transition:transform 0.2s;}
+.sb-cat-toggle.collapsed .arrow{transform:rotate(-90deg);}
+.sb-cat-body{overflow:hidden;transition:max-height 0.25s ease;}
+
+/* ── MAIN ── */
+#main {
+  margin-top:52px;
+  min-height:calc(100vh - 52px);
+}
+
+/* ── VIEWS ── */
+.view{display:none;max-width:820px;margin:0 auto;padding:2.5rem 1.75rem;}
+.view.active{display:block;}
+
+/* ── HOME ── */
+#view-home {
+  display:none;max-width:100%;padding:0;margin:0;
+  min-height:calc(100vh - 52px);
+  flex-direction:column;align-items:center;justify-content:center;
+  background:var(--bg);
+}
+#view-home.active{display:flex;}
+.home-hero{text-align:center;padding:3rem 2rem 2.5rem;max-width:580px;}
+.home-logo{
+  font-family:'DM Serif Display',serif;font-size:4rem;
+  color:var(--blue);letter-spacing:-0.02em;line-height:1;margin-bottom:0.75rem;
+}
+.home-logo em{font-style:italic;color:var(--text);}
+.home-logomark{margin:0.5rem auto 1.25rem;opacity:0.9;}
+.home-tagline{
+  font-size:1.05rem;color:var(--muted);font-weight:300;
+  line-height:1.65;margin-bottom:2.5rem;max-width:420px;margin-left:auto;margin-right:auto;
+}
+.home-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:0.85rem;width:100%;max-width:520px;margin-bottom:2rem;}
+.home-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:12px;
+  padding:1.1rem 1.25rem;cursor:pointer;transition:all 0.18s;text-align:left;
+  position:relative;overflow:hidden;
+}
+.home-card::after{content:'';position:absolute;inset:0;border-radius:12px;background:var(--blue);opacity:0;transition:opacity 0.18s;}
+.home-card:hover{border-color:var(--border2);box-shadow:0 4px 20px rgba(22,163,74,0.12);transform:translateY(-1px);}
+.home-card:hover::after{opacity:0.03;}
+.home-card-icon{font-size:1.1rem;margin-bottom:0.5rem;display:block;}
+.home-card-title{font-size:0.82rem;font-weight:600;color:var(--text);margin-bottom:0.15rem;}
+.home-card-sub{font-size:0.72rem;color:var(--muted);}
+.home-start-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--blue);color:#fff;border:none;
+  font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:500;
+  padding:10px 24px;border-radius:8px;cursor:pointer;
+  transition:all 0.15s;letter-spacing:0.01em;
+}
+.home-start-btn:hover{background:var(--blue2);transform:translateY(-1px);}
+.home-footer{font-size:0.72rem;color:var(--faint);margin-top:1.25rem;}
+
+/* ── PAGE HEADER ── */
+.page-header{margin-bottom:1.75rem;}
+.page-header h1{font-family:'DM Serif Display',serif;font-size:1.75rem;font-weight:400;color:var(--text);margin-bottom:0.2rem;}
+.page-header p{color:var(--muted);font-size:0.82rem;}
+
+/* ── CAT SWITCHER ── */
+.cat-switcher{display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:1.25rem;}
+.cs-btn{
+  background:none;border:1px solid var(--border);color:var(--muted);
+  font-family:'Inter',sans-serif;font-size:0.75rem;font-weight:500;
+  padding:5px 14px;border-radius:6px;cursor:pointer;transition:all 0.12s;
+}
+.cs-btn:hover{border-color:var(--border2);color:var(--text);}
+.cs-btn.active{background:var(--bluelight);border-color:var(--blue);color:var(--blue);}
+
+/* ── TABS ── */
+.tabs{display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:1.75rem;}
+.tab{
+  background:var(--bg2);border:1px solid var(--border);color:var(--muted);
+  font-family:'Inter',sans-serif;font-size:0.73rem;font-weight:500;
+  padding:4px 12px;border-radius:20px;cursor:pointer;transition:all 0.12s;
+}
+.tab:hover{border-color:var(--border2);color:var(--text);}
+.tab.active{background:var(--bluelight);border-color:var(--blue);color:var(--blue);}
+
+/* ── CARD ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.4rem;margin-bottom:1rem;}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:500;padding:7px 16px;border-radius:7px;cursor:pointer;transition:all 0.13s;border:1px solid transparent;}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue);}
+.btn-primary:hover{background:var(--blue2);}
+.btn-ghost{background:none;border-color:var(--border2);color:var(--text);}
+.btn-ghost:hover{background:var(--bg3);}
+.btn-sm{padding:5px 11px;font-size:0.74rem;}
+.btn-correct{background:rgba(22,163,74,0.1);border-color:var(--green);color:var(--green);}
+.btn-correct:hover{background:rgba(22,163,74,0.18);}
+.btn-wrong{background:rgba(220,38,38,0.08);border-color:var(--red);color:var(--red);}
+.btn-wrong:hover{background:rgba(220,38,38,0.15);}
+
+/* ── BADGE ── */
+.badge{font-size:0.67rem;font-weight:500;padding:2px 8px;border-radius:20px;background:var(--bg3);color:var(--muted);border:1px solid var(--border);}
+.badge-blue{background:var(--bluelight);color:var(--blue);border-color:rgba(22,163,74,0.22);}
+
+/* ── PROGRESS ── */
+.prog-track{height:2px;background:var(--surface);border-radius:2px;margin-bottom:1.25rem;}
+.prog-fill{height:100%;background:var(--blue);border-radius:2px;transition:width 0.3s;}
+.counter{text-align:center;font-size:0.75rem;color:var(--muted);margin-bottom:0.85rem;}
+
+/* ── FLASHCARD ── */
+.fc-shell{perspective:1200px;max-width:600px;margin:0 auto 1.25rem;}
+.fc-inner{position:relative;width:100%;min-height:230px;transform-style:preserve-3d;transition:transform 0.48s cubic-bezier(.4,0,.2,1);cursor:pointer;}
+.fc-inner.flipped{transform:rotateY(180deg);}
+.fc-face{position:absolute;width:100%;min-height:230px;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:14px;padding:1.75rem;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+.fc-front{background:var(--bg2);border:1px solid var(--border);box-shadow:0 2px 12px rgba(22,163,74,0.07);}
+.fc-back{background:var(--bluelight);border:1px solid rgba(22,163,74,0.25);transform:rotateY(180deg);}
+.fc-phrase{font-family:'DM Serif Display',serif;font-style:italic;font-size:1.35rem;color:var(--text);margin-bottom:0.6rem;}
+.fc-hint{font-size:0.68rem;color:var(--faint);margin-top:auto;}
+.fc-back-content{text-align:left;width:100%;}
+.fc-back-phrase{font-family:'DM Serif Display',serif;font-style:italic;font-size:1rem;color:var(--blue);margin-bottom:0.6rem;text-align:center;}
+.fc-label{font-size:0.64rem;text-transform:uppercase;letter-spacing:0.09em;color:var(--muted);margin-bottom:0.25rem;}
+.fc-value{font-size:0.82rem;color:var(--text);line-height:1.65;margin-bottom:0.4rem;}
+.fc-actions{display:flex;gap:0.6rem;justify-content:center;flex-wrap:wrap;}
+
+/* ── FILL IN BLANK ── */
+.fib-phrase{font-family:'DM Serif Display',serif;font-style:italic;font-size:1.2rem;color:var(--text);line-height:2.2;text-align:center;margin:1rem 0;}
+.blank{display:inline-block;border:none;border-bottom:2px solid var(--blue);background:transparent;color:var(--blue);font-family:'DM Serif Display',serif;font-style:italic;font-size:inherit;text-align:center;padding:0 3px 1px;min-width:55px;}
+.blank:focus{outline:none;border-bottom-color:var(--blue2);}
+.blank.correct{border-color:var(--green);color:var(--green);}
+.blank.revealed{border-color:var(--red);color:var(--red);}
+.result-banner{text-align:center;padding:0.6rem;border-radius:7px;font-size:0.82rem;font-weight:500;display:none;margin-top:0.4rem;}
+.result-banner.ok{display:block;background:rgba(22,163,74,0.08);color:var(--green);border:1px solid rgba(22,163,74,0.22);}
+.result-banner.no{display:block;background:rgba(220,38,38,0.07);color:var(--red);border:1px solid rgba(220,38,38,0.18);}
+.analysis-reveal{margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);display:none;animation:fadeIn 0.35s ease;}
+.analysis-reveal.visible{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.al{font-size:0.64rem;text-transform:uppercase;letter-spacing:0.09em;color:var(--blue);margin-bottom:0.4rem;}
+.analysis-reveal p{font-size:0.85rem;line-height:1.75;color:var(--text);}
+
+/* ── NOTES ── */
+.notes-list .note{background:var(--bg2);border:1px solid var(--border);border-left:2px solid var(--blue);border-radius:0 10px 10px 0;padding:1.1rem 1.35rem;margin-bottom:0.6rem;}
+.note .n-phrase{font-family:'DM Serif Display',serif;font-style:italic;font-size:1.05rem;color:var(--text);margin-bottom:0.15rem;}
+.note .n-src{font-size:0.73rem;font-weight:600;color:var(--blue);margin-bottom:0.35rem;text-transform:uppercase;letter-spacing:0.06em;}
+.note .n-analysis{font-size:0.82rem;color:var(--muted);line-height:1.7;}
+.ctx-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.35rem;margin-bottom:0.85rem;}
+.ctx-box h3{font-family:'DM Serif Display',serif;font-size:1.1rem;font-weight:400;color:var(--text);margin-bottom:0.65rem;}
+.ctx-box p{font-size:0.85rem;color:var(--muted);line-height:1.75;}
+.ctx-box p+p{margin-top:0.65rem;}
+.section-label{font-family:'DM Serif Display',serif;font-size:1rem;font-weight:400;color:var(--muted);margin:1.25rem 0 0.75rem;}
+
+/* ── PAST PAPERS ── */
+.papers-intro{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1.75rem;}
+.papers-intro p{font-size:0.875rem;color:var(--muted);margin-bottom:1rem;}
+.papers-units{display:flex;flex-wrap:wrap;gap:0.4rem;}
+.unit-pill{font-size:0.72rem;font-weight:500;padding:4px 10px;border-radius:20px;background:var(--bluelight);color:var(--blue);border:1px solid rgba(22,163,74,0.22);}
+.papers-years{display:flex;flex-direction:column;gap:1.25rem;}
+.paper-year{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.paper-year-label{font-family:'DM Serif Display',serif;font-size:1.1rem;font-weight:400;color:var(--text);padding:0.85rem 1.5rem;border-bottom:1px solid var(--border);background:var(--bg3);}
+.paper-grid{padding:0.5rem 0;}
+.paper-row{display:flex;align-items:center;gap:1rem;padding:0.75rem 1.5rem;border-bottom:1px solid var(--border);}
+.paper-row:last-child{border-bottom:none;}
+.paper-name{flex:1;min-width:0;font-size:0.83rem;color:var(--text);line-height:1.4;}
+.paper-unit{display:block;font-size:0.68rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--blue);margin-bottom:0.15rem;}
+.paper-links{display:flex;flex-wrap:wrap;gap:0.4rem;flex-shrink:0;}
+.paper-link{display:inline-flex;align-items:center;font-size:0.75rem;font-weight:500;padding:4px 10px;border-radius:6px;border:1px solid var(--border2);color:var(--blue);background:var(--bluelight);text-decoration:none;transition:all 0.13s;white-space:nowrap;}
+.paper-link:hover{background:var(--blue);color:#fff;border-color:var(--blue);}
+.paper-link.ms{background:var(--bg3);color:var(--muted);border-color:var(--border);}
+.paper-link.ms:hover{background:var(--surface);color:var(--text);}
+.papers-note{margin-top:1.25rem;font-size:0.78rem;color:var(--muted);text-align:center;}
+.papers-note a{color:var(--blue);text-decoration:none;}
+.papers-note a:hover{text-decoration:underline;}
+
+@media(max-width:560px){
+  .paper-row{flex-direction:column;align-items:flex-start;gap:0.5rem;}
+  .home-cards{grid-template-columns:1fr 1fr;}
+  .home-logo{font-size:3rem;}
+  .view{padding:1.5rem 1rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <button class="icon-btn hamburger" onclick="toggleSidebar()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="topbar-logo" onclick="showView('home')">CS<em>Rev</em></div>
+  <div class="topbar-spacer"></div>
+  <button class="icon-btn" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">☀️</button>
+</div>
+
+<!-- SIDEBAR OVERLAY -->
+<div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sb-section">
+    <span class="sb-label">Navigate</span>
+    <button class="sb-item active" id="sb-home" onclick="navTo('home')">
+      <span class="sb-icon">⌂</span> Home
+    </button>
+    <button class="sb-item" id="sb-papers" onclick="navTo('papers')">
+      <span class="sb-icon">📄</span> Past Papers
+    </button>
+  </div>
+
+  <div class="sb-divider"></div>
+
+  <div class="sb-section">
+    <button class="sb-cat-toggle" id="toggle-systems" onclick="toggleCat('systems')">
+      <span>Systems Architecture</span><span class="arrow">▾</span>
+    </button>
+    <div class="sb-cat-body" id="cat-systems">
+      <button class="sb-item" onclick="navMode('flashcards','systems')"><span class="sb-icon">🃏</span> Flashcards</button>
+      <button class="sb-item" onclick="navMode('fill','systems')"><span class="sb-icon">✍️</span> Fill-in-Blank</button>
+      <button class="sb-item" onclick="navMode('notes','systems')"><span class="sb-icon">📋</span> Notes</button>
+    </div>
+  </div>
+
+  <div class="sb-divider"></div>
+
+  <div class="sb-section">
+    <button class="sb-cat-toggle" id="toggle-networks" onclick="toggleCat('networks')">
+      <span>Networks & Security</span><span class="arrow">▾</span>
+    </button>
+    <div class="sb-cat-body" id="cat-networks">
+      <button class="sb-item" onclick="navMode('flashcards','networks')"><span class="sb-icon">🃏</span> Flashcards</button>
+      <button class="sb-item" onclick="navMode('fill','networks')"><span class="sb-icon">✍️</span> Fill-in-Blank</button>
+      <button class="sb-item" onclick="navMode('notes','networks')"><span class="sb-icon">📋</span> Notes</button>
+    </div>
+  </div>
+
+  <div class="sb-divider"></div>
+
+  <div class="sb-section">
+    <button class="sb-cat-toggle" id="toggle-data" onclick="toggleCat('data')">
+      <span>Data & Representation</span><span class="arrow">▾</span>
+    </button>
+    <div class="sb-cat-body" id="cat-data">
+      <button class="sb-item" onclick="navMode('flashcards','data')"><span class="sb-icon">🃏</span> Flashcards</button>
+      <button class="sb-item" onclick="navMode('fill','data')"><span class="sb-icon">✍️</span> Fill-in-Blank</button>
+      <button class="sb-item" onclick="navMode('notes','data')"><span class="sb-icon">📋</span> Notes</button>
+    </div>
+  </div>
+
+  <div class="sb-divider"></div>
+
+  <div class="sb-section">
+    <button class="sb-cat-toggle" id="toggle-algorithms" onclick="toggleCat('algorithms')">
+      <span>Algorithms & Programming</span><span class="arrow">▾</span>
+    </button>
+    <div class="sb-cat-body" id="cat-algorithms">
+      <button class="sb-item" onclick="navMode('flashcards','algorithms')"><span class="sb-icon">🃏</span> Flashcards</button>
+      <button class="sb-item" onclick="navMode('fill','algorithms')"><span class="sb-icon">✍️</span> Fill-in-Blank</button>
+      <button class="sb-item" onclick="navMode('notes','algorithms')"><span class="sb-icon">📋</span> Notes</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- HOME -->
+  <div id="view-home" class="view active">
+    <div class="home-hero">
+      <div class="home-logo">CS<em>Rev</em></div>
+      <div class="home-logomark">
+        <svg width="100" height="70" viewBox="0 0 100 70" role="img" xmlns="http://www.w3.org/2000/svg">
+          <title>CSRev logo</title>
+          <!-- monitor -->
+          <rect x="10" y="8" width="80" height="46" rx="4" fill="none" stroke="#16a34a" stroke-width="2" opacity="0.7"/>
+          <rect x="14" y="12" width="72" height="38" rx="2" fill="#16a34a" opacity="0.08"/>
+          <!-- stand -->
+          <line x1="50" y1="54" x2="50" y2="62" stroke="#16a34a" stroke-width="2" opacity="0.5"/>
+          <line x1="38" y1="62" x2="62" y2="62" stroke="#16a34a" stroke-width="2" opacity="0.5"/>
+          <!-- code brackets -->
+          <path d="M26 26 L20 31 L26 36" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+          <path d="M74 26 L80 31 L74 36" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+          <!-- cursor line -->
+          <line x1="36" y1="31" x2="64" y2="31" stroke="#16a34a" stroke-width="1.5" opacity="0.5"/>
+          <rect x="64" y="28" width="2" height="6" rx="1" fill="#16a34a" opacity="0.7"/>
+        </svg>
+      </div>
+      <p class="home-tagline">A focused revision platform for OCR GCSE Computer Science — key terms, definitions, concepts, and interactive study tools.</p>
+      <div class="home-cards">
+        <div class="home-card" onclick="navMode('flashcards','systems')">
+          <span class="home-card-icon">🃏</span>
+          <div class="home-card-title">Flashcards</div>
+          <div class="home-card-sub">Questions &amp; answers</div>
+        </div>
+        <div class="home-card" onclick="navMode('fill','systems')">
+          <span class="home-card-icon">✍️</span>
+          <div class="home-card-title">Fill-in-Blank</div>
+          <div class="home-card-sub">Test your recall</div>
+        </div>
+        <div class="home-card" onclick="navMode('notes','systems')">
+          <span class="home-card-icon">📋</span>
+          <div class="home-card-title">Notes</div>
+          <div class="home-card-sub">Browse everything</div>
+        </div>
+        <div class="home-card" onclick="navTo('papers')" style="grid-column:1/-1">
+          <span class="home-card-icon">📄</span>
+          <div class="home-card-title">Past Papers</div>
+          <div class="home-card-sub">OCR J277 · 2020–2024</div>
+        </div>
+      </div>
+      <button class="home-start-btn" onclick="toggleSidebar()">Open revision menu →</button>
+      <div class="home-footer">Systems Architecture · Networks &amp; Security · Data &amp; Representation · Algorithms &amp; Programming · OCR GCSE Computer Science</div>
+    </div>
+  </div>
+
+  <!-- FLASHCARDS -->
+  <div id="view-flashcards" class="view">
+    <div class="page-header"><h1>Flashcards</h1><p>Read the question, then tap to reveal the answer.</p></div>
+    <div class="cat-switcher">
+      <button class="cs-btn active" id="fc-cat-systems" onclick="fcSetCat('systems')">Systems Architecture</button>
+      <button class="cs-btn" id="fc-cat-networks" onclick="fcSetCat('networks')">Networks &amp; Security</button>
+      <button class="cs-btn" id="fc-cat-data" onclick="fcSetCat('data')">Data &amp; Representation</button>
+      <button class="cs-btn" id="fc-cat-algorithms" onclick="fcSetCat('algorithms')">Algorithms &amp; Programming</button>
+    </div>
+    <div class="tabs" id="fc-tabs"></div>
+    <div id="fc-content"></div>
+  </div>
+
+  <!-- FILL IN BLANK -->
+  <div id="view-fill" class="view">
+    <div class="page-header"><h1>Fill in the Blank</h1><p>Complete the key definition or statement — reveal to see the full explanation.</p></div>
+    <div class="cat-switcher">
+      <button class="cs-btn active" id="fib-cat-systems" onclick="fibSetCat('systems')">Systems Architecture</button>
+      <button class="cs-btn" id="fib-cat-networks" onclick="fibSetCat('networks')">Networks &amp; Security</button>
+      <button class="cs-btn" id="fib-cat-data" onclick="fibSetCat('data')">Data &amp; Representation</button>
+      <button class="cs-btn" id="fib-cat-algorithms" onclick="fibSetCat('algorithms')">Algorithms &amp; Programming</button>
+    </div>
+    <div class="tabs" id="fib-tabs"></div>
+    <div id="fib-content"></div>
+  </div>
+
+  <!-- NOTES -->
+  <div id="view-notes" class="view">
+    <div class="page-header"><h1>Notes</h1><p>Browse all key terms, definitions, and explanations.</p></div>
+    <div class="cat-switcher">
+      <button class="cs-btn active" id="notes-cat-systems" onclick="notesSetCat('systems')">Systems Architecture</button>
+      <button class="cs-btn" id="notes-cat-networks" onclick="notesSetCat('networks')">Networks &amp; Security</button>
+      <button class="cs-btn" id="notes-cat-data" onclick="notesSetCat('data')">Data &amp; Representation</button>
+      <button class="cs-btn" id="notes-cat-algorithms" onclick="notesSetCat('algorithms')">Algorithms &amp; Programming</button>
+    </div>
+    <div class="tabs" id="notes-tabs"></div>
+    <div id="notes-content"></div>
+  </div>
+
+  <!-- PAST PAPERS -->
+  <div id="view-papers" class="view">
+    <div class="page-header">
+      <h1>Past Papers</h1>
+      <p>OCR GCSE Computer Science (J277) — question papers and mark schemes</p>
+    </div>
+    <div class="papers-intro">
+      <p>Two components — links open official PDFs. J277 spec launched 2020.</p>
+      <div class="papers-units">
+        <div class="unit-pill">J277/01 — Computer Systems</div>
+        <div class="unit-pill">J277/02 — Computational Thinking, Algorithms &amp; Programming</div>
+      </div>
+    </div>
+    <div class="papers-years">
+
+      <div class="paper-year">
+        <div class="paper-year-label">2024</div>
+        <div class="paper-grid">
+          <div class="paper-row">
+            <div class="paper-name"><span class="paper-unit">J277/01</span>Computer Systems</div>
+            <div class="paper-links">
+              <a class="paper-link" href="https://www.ocr.org.uk/Images/663026-question-paper-computer-systems.pdf" target="_blank" rel="noopener">📄 Paper</a>
+              <a class="paper-link ms" href="https://www.ocr.org.uk/Images/663028-mark-scheme-computer-systems.pdf" target="_blank" rel="noopener">✓ Mark Scheme</a>
+            </div>
+          </div>
+          <div class="paper-row">
+            <div class="paper-name"><span class="paper-unit">J277/02</span>Computational Thinking, Algorithms &amp; Programming</div>
+            <div class="paper-links">
+              <a class="paper-link" href="https://www.ocr.org.uk/Images/663027-question-paper-computational-thinking-algorithms-and-programming.pdf" target="_blank" rel="noopener">📄 Paper</a>
+              <a class="paper-link ms" href="https://www.ocr.org.uk/Images/663029-mark-scheme-computational-thinking-algorithms-and-programming.pdf" target="_blank" rel="noopener">✓ Mark Scheme</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="paper-year">
+        <div class="paper-year-label">2023</div>
+        <div class="paper-grid">
+          <div class="paper-row">
+            <div class="paper-name"><span class="paper-unit">J277/01</span>Computer Systems</div>
+            <div class="paper-links">
+              <a class="paper-link" href="https://www.ocr.org.uk/Images/618548-question-paper-computer-systems.pdf" target="_blank" rel="noopener">📄 Paper</a>
+              <a class="paper-link ms" href="https://www.ocr.org.uk/Images/618549-mark-scheme-computer-systems.pdf" target="_blank" rel="noopener">✓ Mark Scheme</a>
+            </div>
+          </div>
+          <div class="paper-row">
+            <div class="paper-name"><span class="paper-unit">J277/02</span>Computational Thinking, Algorithms &amp; Programming</div>
+            <div class="paper-links">
+              <a class="paper-link" href="https://www.ocr.org.uk/Images/618550-question-paper-computational-thinking-algorithms-and-programming.pdf" target="_blank" rel="noopener">📄 Paper</a>
+              <a class="paper-link ms" href="https://www.ocr.org.uk/Images/618551-mark-scheme-computational-thinking-algorithms-and-programming.pdf" target="_blank" rel="noopener">✓ Mark Scheme</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="paper-year">
+        <div class="paper-year-label">2022</div>
+        <div class="paper-grid">
+          <div class="paper-row">
+            <div class="paper-name"><span class="paper-unit">J277/01</span>Computer Systems</div>
+            <div class="paper-links">
+              <a class="paper-link" href="https://www.ocr.org.uk/Images/618523-question-paper-computer-systems.pdf" target="_blank" rel="noopener">📄 Paper</a>
+              <a class="paper-link ms" href="https://www.ocr.org.uk/Images/618524-mark-scheme-computer-systems.pdf" target="_blank" rel="noopener">✓ Mark Scheme</a>
+            </div>
+          </div>
+          <div class="paper-row">
+            <div class="paper-name"><span class="paper-unit">J277/02</span>Computational Thinking, Algorithms &amp; Programming</div>
+            <div class="paper-links">
+              <a class="paper-link" href="https://www.ocr.org.uk/Images/618525-question-paper-computational-thinking-algorithms-and-programming.pdf" target="_blank" rel="noopener">📄 Paper</a>
+              <a class="paper-link ms" href="https://www.ocr.org.uk/Images/618526-mark-scheme-computational-thinking-algorithms-and-programming.pdf" target="_blank" rel="noopener">✓ Mark Scheme</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="paper-year">
+        <div class="paper-year-label">2021 <span style="font-size:0.72rem;font-weight:400;color:var(--muted)">(assessed differently — sample papers below)</span></div>
+        <div class="paper-grid">
+          <div class="paper-row">
+            <div class="paper-name"><span class="paper-unit">J277/01</span>Computer Systems — Sample Assessment Material</div>
+            <div class="paper-links">
+              <a class="paper-link" href="https://www.ocr.org.uk/Images/558027-j277-01-sam.pdf" target="_blank" rel="noopener">📄 Paper</a>
+              <a class="paper-link ms" href="https://www.ocr.org.uk/Images/558028-j277-01-sam-ms.pdf" target="_blank" rel="noopener">✓ Mark Scheme</a>
+            </div>
+          </div>
+          <div class="paper-row">
+            <div class="paper-name"><span class="paper-unit">J277/02</span>Computational Thinking, Algorithms &amp; Programming — Sample</div>
+            <div class="paper-links">
+              <a class="paper-link" href="https://www.ocr.org.uk/Images/558029-j277-02-sam.pdf" target="_blank" rel="noopener">📄 Paper</a>
+              <a class="paper-link ms" href="https://www.ocr.org.uk/Images/558030-j277-02-sam-ms.pdf" target="_blank" rel="noopener">✓ Mark Scheme</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="paper-year">
+        <div class="paper-year-label">2020 <span style="font-size:0.72rem;font-weight:400;color:var(--muted)">(first sitting)</span></div>
+        <div class="paper-grid">
+          <div class="paper-row">
+            <div class="paper-name"><span class="paper-unit">J277/01</span>Computer Systems</div>
+            <div class="paper-links">
+              <a class="paper-link" href="https://www.ocr.org.uk/Images/618519-question-paper-computer-systems.pdf" target="_blank" rel="noopener">📄 Paper</a>
+              <a class="paper-link ms" href="https://www.ocr.org.uk/Images/618520-mark-scheme-computer-systems.pdf" target="_blank" rel="noopener">✓ Mark Scheme</a>
+            </div>
+          </div>
+          <div class="paper-row">
+            <div class="paper-name"><span class="paper-unit">J277/02</span>Computational Thinking, Algorithms &amp; Programming</div>
+            <div class="paper-links">
+              <a class="paper-link" href="https://www.ocr.org.uk/Images/618521-question-paper-computational-thinking-algorithms-and-programming.pdf" target="_blank" rel="noopener">📄 Paper</a>
+              <a class="paper-link ms" href="https://www.ocr.org.uk/Images/618522-mark-scheme-computational-thinking-algorithms-and-programming.pdf" target="_blank" rel="noopener">✓ Mark Scheme</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="papers-note">
+      Links open official OCR PDFs. If a link doesn't work, visit <a href="https://www.ocr.org.uk/qualifications/gcse/computer-science-j277-from-2020/assessment/" target="_blank" rel="noopener">ocr.org.uk</a> for the full archive.
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  DATA — SYSTEMS ARCHITECTURE
+// ═══════════════════════════════════════════════════════
+const SYSTEMS = [
+  {
+    id:'cpu', title:'The CPU', topic:'Component 1.1',
+    context:`The Central Processing Unit (CPU) is the brain of the computer — it carries out all the instructions of a program. The CPU follows the Fetch-Decode-Execute (FDE) cycle continuously while the computer is running. It fetches an instruction from memory, decodes what it means, then executes it.\n\nThe main components inside the CPU are the ALU (Arithmetic Logic Unit), which performs all arithmetic and logical operations; the CU (Control Unit), which directs the operation of the processor; and registers, which are tiny, ultra-fast storage locations used during processing.\n\nKey registers include the Program Counter (PC), which holds the address of the next instruction; the Memory Address Register (MAR), which holds the address to read from or write to; the Memory Data Register (MDR), which holds data being transferred to/from memory; the Accumulator (ACC), which holds the result of calculations; and the Current Instruction Register (CIR), which holds the instruction being executed.\n\nThe performance of a CPU depends on its clock speed (measured in GHz), the number of cores, and the amount of cache memory available.`,
+    quotes: [
+      {phrase:'What are the three stages of the Fetch-Decode-Execute cycle?', location:'CPU Architecture', blank:'Decode', analysis:'Fetch: the CPU retrieves the next instruction from memory using the Program Counter (PC) and Memory Address Register (MAR). Decode: the Control Unit interprets what operation is required. Execute: the instruction is carried out — often by the ALU. This cycle repeats billions of times per second.'},
+      {phrase:'What does the ALU do?', location:'CPU Components', blank:'Arithmetic', analysis:'The Arithmetic Logic Unit (ALU) performs all arithmetic operations (addition, subtraction, multiplication, division) and logical comparisons (AND, OR, NOT, greater-than, equal-to). Every calculation a program makes is ultimately handled by the ALU.'},
+      {phrase:'What is the role of the Control Unit?', location:'CPU Components', blank:'Control', analysis:'The Control Unit (CU) coordinates the entire CPU. It manages the FDE cycle — sending control signals to fetch instructions, directing data to the correct registers, and signalling when execution is complete. It does not process data itself; it orchestrates the other components.'},
+      {phrase:'What does the Program Counter (PC) store?', location:'CPU Registers', blank:'Counter', analysis:'The Program Counter holds the memory address of the next instruction to be fetched. After each fetch it is automatically incremented to point to the next instruction — unless a jump or branch instruction changes it to a different address.'},
+      {phrase:'What is cache memory and why does it improve performance?', location:'CPU Performance', blank:'Cache', analysis:'Cache is ultra-fast memory built into or very close to the CPU. It stores copies of frequently used data and instructions from RAM so the CPU can retrieve them far faster than going to main memory. L1 cache is smallest and fastest; L2 and L3 are progressively larger and slightly slower. More cache generally improves performance.'},
+      {phrase:'What is clock speed and how does it affect CPU performance?', location:'CPU Performance', blank:'GHz', analysis:'Clock speed is the number of fetch-decode-execute cycles per second, measured in GHz (gigahertz — billions of cycles per second). A higher clock speed means more instructions processed per second. However, a faster clock also generates more heat and uses more power.'},
+      {phrase:'How do multiple cores improve CPU performance?', location:'CPU Performance', blank:'parallel', analysis:'A multi-core CPU has multiple independent processing units on one chip, each capable of executing instructions simultaneously. A quad-core CPU can run four instruction streams in parallel. This improves performance for multi-threaded programs, though tasks that cannot be parallelised see little benefit from extra cores.'},
+    ]
+  },
+  {
+    id:'memory', title:'Memory & Storage', topic:'Component 1.2',
+    context:`Computers use two types of memory: primary storage (RAM and ROM) and secondary storage (hard drives, SSDs, USB drives etc.).\n\nRAM (Random Access Memory) is the computer's main working memory. It is volatile — its contents are lost when power is removed. RAM holds the operating system, currently running programs, and data being processed. More RAM allows more programs to run simultaneously.\n\nROM (Read-Only Memory) is non-volatile — it retains data without power. It typically stores the firmware/BIOS that runs when the computer first starts up.\n\nVirtual memory is space on secondary storage used as an extension of RAM when RAM is full. It is much slower than RAM, so excessive use causes slowdown.\n\nSecondary storage is non-volatile and used for long-term data storage. Key types include: HDDs (magnetic spinning disks, high capacity, cheaper, slower), SSDs (flash memory, faster, more durable, more expensive), optical discs (CDs, DVDs, Blu-ray), and flash/USB drives.`,
+    quotes: [
+      {phrase:'What does volatile mean, and which type of memory is volatile?', location:'Memory Types', blank:'volatile', analysis:'Volatile memory loses all its data when power is removed. RAM (Random Access Memory) is volatile — when you switch off a computer without saving, unsaved work is lost. RAM holds the OS, running programs, and active data. It is much faster than secondary storage, which is why programs are loaded into RAM before being run.'},
+      {phrase:'What is ROM used for and why is it non-volatile?', location:'Memory Types', blank:'firmware', analysis:'ROM (Read-Only Memory) is non-volatile — its contents persist without power. It stores the firmware (BIOS/UEFI) that runs the moment a computer is switched on, initialising hardware before the OS loads. ROM cannot be easily modified during normal operation, which is why the boot instructions survive a power cut.'},
+      {phrase:'What is virtual memory and what is the drawback of using it?', location:'Memory Management', blank:'secondary', analysis:'When RAM is full, the OS moves some data to a reserved area of secondary storage called virtual memory (swap space). This allows more programs to run than RAM alone would support. The major drawback is speed — secondary storage is far slower than RAM. Heavy use of virtual memory causes noticeable slowdown as data is constantly swapped in and out.'},
+      {phrase:'Give two advantages and two disadvantages of HDDs over SSDs.', location:'Secondary Storage', blank:'magnetic', analysis:'HDD advantages: much higher capacity per pound (cheaper); higher maximum storage sizes available. HDD disadvantages: slower read/write speeds; contain moving parts (spinning magnetic platters and a read/write head) making them fragile and vulnerable to physical shock; consume more power; produce more noise. SSDs have no moving parts, are faster, more durable, quieter, and use less power — but cost more per gigabyte.'},
+      {phrase:'What is an SSD and what are its advantages over an HDD?', location:'Secondary Storage', blank:'flash', analysis:'A Solid-State Drive (SSD) stores data electronically in flash memory cells — there are no moving parts. Advantages over HDD: significantly faster read/write speeds; more durable (no moving parts to break); uses less power; silent; lighter. Disadvantages: costs more per gigabyte; limited number of write cycles before cells degrade.'},
+      {phrase:'What is an embedded system and why does it use ROM?', location:'Embedded Systems', blank:'Embedded', analysis:'An embedded system is a computer built into a device to perform one specific, fixed task — e.g., a washing machine controller, microwave, or car engine management system. It uses ROM to store its program because the program never needs to change. This makes the system fast, reliable, and cheap. Flexibility is not needed; predictability is.'},
+    ]
+  },
+  {
+    id:'os', title:'Operating Systems & Boolean Logic', topic:'Component 1.3 / 1.6',
+    context:`An operating system (OS) is the fundamental software that manages computer hardware and software. Key functions include: managing the CPU (scheduling processes), managing memory (allocating RAM to programs), managing files (the file system), managing peripherals/devices (via device drivers), and providing a user interface.\n\nBoolean logic uses operators AND, OR, and NOT to combine binary inputs and produce outputs. Logic gates are electronic components that implement these operations. Truth tables show all possible input combinations and their outputs.\n\nKey logic gates: AND (output 1 only if both inputs are 1), OR (output 1 if at least one input is 1), NOT (inverts the input), XOR (output 1 if inputs are different), NAND (NOT AND — opposite of AND), NOR (NOT OR).\n\nBoolean logic is the foundation of all digital circuits — from simple combinational circuits to entire CPUs.`,
+    quotes: [
+      {phrase:'What are four key functions of an operating system?', location:'Operating Systems', blank:'scheduling', analysis:'1. CPU scheduling — managing which processes run and for how long (e.g., round robin). 2. Memory management — allocating RAM to programs. 3. File management — organising data in a file system. 4. Device management — communicating with hardware via device drivers. The OS also provides the user interface (GUI or CLI).'},
+      {phrase:'What is a device driver and why is it needed?', location:'Operating Systems', blank:'drivers', analysis:'A device driver is software that tells the OS how to communicate with a specific hardware device (e.g., a printer, graphics card, or keyboard). Without the correct driver, the OS cannot use the hardware. Drivers act as a translator between the generic OS and the specific device — programs can use hardware without needing to know its technical details.'},
+      {phrase:'What is the output of an AND gate when both inputs are 1? When one is 0?', location:'Boolean Logic', blank:'AND', analysis:'AND gate outputs 1 only when ALL inputs are 1. Truth table: 0 AND 0 = 0, 1 AND 0 = 0, 0 AND 1 = 0, 1 AND 1 = 1. If any input is 0, the output is 0. AND is used in circuits where all conditions must be satisfied simultaneously before an action occurs.'},
+      {phrase:'When does an OR gate output 1?', location:'Boolean Logic', blank:'OR', analysis:'An OR gate outputs 1 when at least one input is 1. Truth table: 0 OR 0 = 0, 1 OR 0 = 1, 0 OR 1 = 1, 1 OR 1 = 1. Only when all inputs are 0 does the output become 0. OR is used wherever satisfying any one of several conditions is sufficient to trigger an action.'},
+      {phrase:'What does a NOT gate do?', location:'Boolean Logic', blank:'inverts', analysis:'A NOT gate (inverter) has a single input and produces the opposite output: NOT 0 = 1, NOT 1 = 0. It is the simplest logic gate. Combined with AND and OR, NOT creates NAND and NOR gates. NAND and NOR are called "universal gates" because any logic circuit can be built entirely from either one of them alone.'},
+      {phrase:'When does an XOR gate output 1, and when does it output 0?', location:'Boolean Logic', blank:'XOR', analysis:'An XOR (exclusive OR) gate outputs 1 when its inputs are different, and 0 when they are the same. Truth table: 0 XOR 0 = 0, 1 XOR 1 = 0, 1 XOR 0 = 1, 0 XOR 1 = 1. XOR is used in binary addition circuits — it computes the sum bit when adding two 1-bits (which gives 0 with a carry of 1).'},
+    ]
+  },
+];
+
+// ═══════════════════════════════════════════════════════
+//  DATA — NETWORKS & SECURITY
+// ═══════════════════════════════════════════════════════
+const NETWORKS = [
+  {
+    id:'network-types', title:'Network Types & Topologies', topic:'Component 1.3',
+    context:`A network is two or more computers connected together to share resources and communicate. Key types include LANs (Local Area Networks), which cover a small geographical area like a school or office, and WANs (Wide Area Networks), which span large distances (the internet is the largest WAN).\n\nNetwork topologies describe the physical or logical arrangement of devices:\n- Star topology: all devices connect to a central switch/hub. If the switch fails, the whole network fails. Easy to add new devices and to identify faults.\n- Bus topology: all devices share a single cable (the bus). Simple and cheap but one break brings down the whole network and performance degrades with more devices.\n- Ring topology: devices connected in a loop. Data travels in one direction. One break can disrupt the whole network.\n\nWired connections (Ethernet) are faster and more secure than wireless (Wi-Fi). Wireless uses radio waves — convenient but subject to interference and easier to intercept.\n\nKey hardware: routers (direct data between networks, assign IP addresses), switches (connect devices within a LAN, direct data to the correct device), and network interface cards (NICs).`,
+    quotes: [
+      {phrase:'What is the difference between a LAN and a WAN?', location:'Network Types', blank:'geographical', analysis:'A LAN (Local Area Network) connects devices in a small geographical area — a single building or campus — and is owned by the organisation using it. A WAN (Wide Area Network) spans large distances, connecting multiple LANs via leased lines, fibre, or satellite. The internet is the largest WAN. LANs are typically faster and cheaper to run than WANs.'},
+      {phrase:'Give two advantages and one disadvantage of a star topology.', location:'Network Topologies', blank:'switch', analysis:'Advantages: (1) If one device or cable fails, only that device is affected — other devices continue working. (2) Easy to add new devices without disrupting the network. (3) Faults are easy to identify. Disadvantage: if the central switch fails, the entire network goes down. Star topology is the most common in modern LANs.'},
+      {phrase:'What is the difference between a router and a switch?', location:'Network Hardware', blank:'Router', analysis:'A router connects different networks together (e.g., a home LAN to the internet) and directs packets between them using IP addresses. It also assigns IP addresses via DHCP. A switch connects multiple devices within the same LAN and sends data only to the intended device using MAC addresses — unlike a hub, which broadcasts to all devices.'},
+      {phrase:'What is packet switching and why is it used?', location:'Data Transmission', blank:'packets', analysis:'Packet switching breaks data into small chunks called packets, each containing the payload, source and destination IP addresses, and a sequence number. Packets may take different routes across a network and are reassembled at the destination. This is efficient — if one route is congested or broken, packets can be rerouted. It also allows multiple users to share the same network infrastructure simultaneously.'},
+      {phrase:'Give one advantage of wired over wireless connections, and one advantage of wireless over wired.', location:'Network Connections', blank:'interference', analysis:'Wired (Ethernet) advantage: faster and more reliable transmission; less susceptible to interference; more secure as data cannot be intercepted without physical access to the cable. Wireless (Wi-Fi) advantage: devices can connect from anywhere within range without physical cables — greater flexibility and mobility. Wireless is more vulnerable to interference and easier to intercept.'},
+      {phrase:'What is a MAC address and how does a switch use it?', location:'Network Hardware', blank:'MAC', analysis:"A MAC (Media Access Control) address is a unique hardware identifier permanently assigned to a network interface card (NIC). It is a 48-bit address expressed in hexadecimal. A switch builds a table mapping each MAC address to a port, allowing it to send data directly to the intended device rather than broadcasting to all — improving efficiency and security."},
+    ]
+  },
+  {
+    id:'protocols', title:'Protocols & The Internet', topic:'Component 1.3',
+    context:`A protocol is a set of rules that determine how data is transmitted over a network. Both sender and receiver must use the same protocol for communication to work.\n\nThe TCP/IP model describes how data is sent over the internet using four layers: Application (HTTP, FTP, SMTP), Transport (TCP/UDP), Internet (IP), and Link (Ethernet/Wi-Fi).\n\nKey protocols:\n- HTTP/HTTPS: transfers web pages. HTTPS is encrypted.\n- FTP: transfers files between systems.\n- SMTP/IMAP/POP3: email sending and receiving.\n- TCP: ensures reliable, ordered delivery — checks all packets arrived, requests retransmission if needed.\n- UDP: faster but unreliable — packets may be lost (used for streaming/gaming).\n- DNS: translates domain names (google.com) into IP addresses.\n- IP: routes packets between networks using IP addresses.\n\nIP addresses uniquely identify devices. IPv4 uses 32-bit addresses (e.g., 192.168.1.1). IPv6 uses 128-bit addresses to provide a vastly larger address space.`,
+    quotes: [
+      {phrase:'What is a protocol and why are protocols necessary?', location:'Network Protocols', blank:'rules', analysis:'A protocol is an agreed set of rules governing how data is formatted, transmitted, received, and acknowledged between devices. Without protocols, devices from different manufacturers running different software could not communicate. Protocols ensure that a web browser on any computer can communicate with any web server, regardless of the underlying hardware or OS.'},
+      {phrase:'What is the difference between TCP and UDP? When is each used?', location:'TCP/IP', blank:'reliable', analysis:'TCP (Transmission Control Protocol) establishes a connection, confirms each packet was received, and requests retransmission of lost packets — making it reliable but slower. Used for: web pages, emails, file downloads (accuracy matters). UDP (User Datagram Protocol) sends packets without connection or confirmation — faster but may lose packets. Used for: video streaming, online gaming, voice calls (speed matters more than perfection).'},
+      {phrase:'What does DNS do and why is it needed?', location:'Network Protocols', blank:'domain', analysis:'The Domain Name System (DNS) translates human-readable domain names (e.g., bbc.co.uk) into IP addresses (e.g., 151.101.0.81) that computers use to identify each other. Without DNS, users would need to type IP addresses directly. DNS works like a phone book — your device queries a DNS server, which looks up and returns the correct IP address.'},
+      {phrase:'What is the difference between HTTP and HTTPS?', location:'Network Protocols', blank:'encrypted', analysis:'HTTP (HyperText Transfer Protocol) transfers web pages from server to browser. HTTPS adds SSL/TLS encryption — data is scrambled in transit so that even if intercepted, it cannot be read. HTTPS also authenticates the server (confirming you are on the real website). It is essential for any site handling passwords, payment details, or personal data.'},
+      {phrase:'What is an IP address? What is the difference between IPv4 and IPv6?', location:'IP Addressing', blank:'uniquely', analysis:'An IP address uniquely identifies every device on a network. IPv4 uses 32-bit addresses written as four decimal numbers (e.g., 192.168.1.1), allowing about 4.3 billion unique addresses — now nearly exhausted. IPv6 uses 128-bit addresses in hexadecimal (e.g., 2001:0db8:85a3::8a2e:0370:7334), providing 340 undecillion addresses — sufficient for all future devices.'},
+      {phrase:'What are the four layers of the TCP/IP model?', location:'TCP/IP Model', blank:'Application', analysis:'1. Application layer — protocols used by applications: HTTP, HTTPS, FTP, SMTP, DNS. 2. Transport layer — end-to-end communication: TCP (reliable) or UDP (fast). 3. Internet layer — addressing and routing packets between networks: IP. 4. Link layer — physical transmission on the local network: Ethernet, Wi-Fi. Each layer adds a header when sending (encapsulation) and removes it when receiving.'},
+    ]
+  },
+  {
+    id:'security', title:'Cyber Security', topic:'Component 1.4',
+    context:`Cyber security protects computer systems, networks, and data from attack, damage, or unauthorised access.\n\nCommon threats:\n- Malware: malicious software including viruses (attach to programs), worms (self-replicating, spread across networks), ransomware (encrypts files and demands payment), spyware (secretly records activity), trojans (disguised as legitimate software).\n- Phishing: deceptive emails/websites trick users into revealing personal information or clicking malicious links.\n- Social engineering: manipulating people (not systems) into revealing confidential information.\n- Brute force attacks: systematically trying every possible password combination.\n- SQL injection: inserting malicious SQL code into a web form to manipulate a database.\n- Denial of Service (DoS): flooding a server with requests to crash it or make it unavailable.\n\nDefences:\n- Strong passwords and two-factor authentication (2FA)\n- Firewalls (monitor and filter network traffic)\n- Antivirus/anti-malware software\n- Encryption (scrambles data so only authorised parties can read it)\n- Regular software updates (patch known vulnerabilities)\n- User access levels and permissions`,
+    quotes: [
+      {phrase:'Name four types of malware and explain each.', location:'Cyber Threats', blank:'malicious', analysis:"Virus: attaches to a legitimate file; spreads when the file is shared; requires user action to execute. Worm: self-replicates and spreads across networks without user action. Ransomware: encrypts the victim's files and demands payment for the decryption key. Spyware: secretly monitors activity and transmits data to an attacker. Trojan: disguised as legitimate software but contains hidden malicious code."},
+      {phrase:'What is phishing and how does it differ from spear phishing?', location:'Cyber Threats', blank:'credentials', analysis:'Phishing uses fraudulent emails, websites, or messages designed to look legitimate, tricking users into entering passwords, financial details, or clicking malicious links. It exploits human psychology rather than technical vulnerabilities. Spear phishing is a targeted version — the attacker uses personal information about the specific victim (name, employer, colleagues) to make the attack far more convincing.'},
+      {phrase:'What is SQL injection and how can it be prevented?', location:'Cyber Threats', blank:'injection', analysis:"SQL injection occurs when malicious SQL code is entered into an input field (e.g., a login form). If the application does not sanitise inputs, the database executes the injected code — allowing data extraction, modification, or deletion. Classic example: entering ' OR '1'='1 bypasses authentication. Prevention: parameterised queries / prepared statements, which treat user input as data not code."},
+      {phrase:'What is a firewall and what are its limitations?', location:'Cyber Defences', blank:'Firewall', analysis:'A firewall monitors incoming and outgoing network traffic, permitting or blocking it based on rules. Hardware firewalls protect an entire network; software firewalls protect individual devices. Limitation: firewalls cannot stop threats already inside the network (e.g., a user who downloads malware), and they cannot detect threats embedded in encrypted traffic without additional inspection.'},
+      {phrase:"What is encryption? What is the difference between symmetric and asymmetric?", location:'Cyber Defences', blank:'Encryption', analysis:'Encryption converts data into ciphertext using a key — only someone with the correct decryption key can read it. Symmetric encryption uses the same key to encrypt and decrypt (fast, but the key must be securely shared). Asymmetric (public key) encryption uses a public key to encrypt and a private key to decrypt — the private key never needs to be shared. HTTPS uses asymmetric encryption to establish a secure connection.'},
+      {phrase:'What is two-factor authentication (2FA) and why is it more secure than a password alone?', location:'Cyber Defences', blank:'authentication', analysis:'2FA requires two separate forms of verification: something you know (a password) and something you have (a phone receiving a one-time code) or something you are (biometrics). Even if an attacker steals your password, they still cannot log in without the second factor. This significantly reduces the risk from phishing and password breaches.'},
+    ]
+  },
+];
+
+// ═══════════════════════════════════════════════════════
+//  DATA — DATA & REPRESENTATION
+// ═══════════════════════════════════════════════════════
+const DATA = [
+  {
+    id:'binary', title:'Binary & Number Systems', topic:'Component 1.5',
+    context:`Computers represent all data using binary — a number system with only two digits: 0 and 1. Each binary digit is called a bit. 8 bits = 1 byte. 1024 bytes = 1 kilobyte (KB), 1024 KB = 1 megabyte (MB), 1024 MB = 1 gigabyte (GB).\n\nDenary (base 10) is our everyday number system using digits 0–9. Binary (base 2) uses only 0 and 1. Hexadecimal (base 16) uses digits 0–9 and A–F, where A=10, B=11, C=12, D=13, E=14, F=15.\n\nConverting denary to binary: repeatedly divide by 2, writing the remainders from bottom to top. Example: 13 / 2 = 6 r1, 6 / 2 = 3 r0, 3 / 2 = 1 r1, 1 / 2 = 0 r1 -> binary = 1101.\n\nBinary addition: 0+0=0, 0+1=1, 1+0=1, 1+1=10 (0 carry 1), 1+1+1=11 (1 carry 1).\n\nTwo's complement represents negative numbers in binary. To negate: invert all bits, then add 1.\n\nHexadecimal is used as a shorthand for binary — each hex digit represents exactly 4 binary bits (a nibble). Used in memory addresses, colour codes, MAC addresses.`,
+    quotes: [
+      {phrase:"What is a bit? Why do computers use binary?", location:'Binary Basics', blank:'smallest', analysis:"A bit (binary digit) is the smallest unit of data — it can only be 0 or 1. Computers use binary because electronic components naturally exist in two states: on (1) or off (0), high voltage or low voltage. All data — text, images, sound, video — is ultimately stored and processed as sequences of bits."},
+      {phrase:'How many values can 8 bits represent? What is the range for an unsigned byte?', location:'Binary Units', blank:'256', analysis:'8 bits = 1 byte. With 8 bits there are 2^8 = 256 possible combinations (00000000 to 11111111). An unsigned byte can represent values 0 to 255. Memory units: 1 KB = 1024 bytes, 1 MB = 1024 KB, 1 GB = 1024 MB, 1 TB = 1024 GB.'},
+      {phrase:'What is binary overflow and when does it occur?', location:'Binary Arithmetic', blank:'carry', analysis:"Overflow occurs when the result of a binary addition is too large to fit in the available number of bits. In 8-bit binary, 1+1=10 (carry 1 to the next column). Overflow happens when a carry occurs out of the most significant (leftmost) bit — the result doesn't fit and the extra bit is lost, producing an incorrect answer."},
+      {phrase:"How do you convert a positive number to its two's complement (negative) form?", location:'Binary Representation', blank:"Two's", analysis:"Two's complement represents negative integers in binary. Steps: (1) Write the positive number in binary. (2) Invert all bits (flip every 0 to 1 and every 1 to 0). (3) Add 1 to the result. Example: +5 = 00000101 -> invert -> 11111010 -> add 1 -> 11111011 = -5. With 8 bits, the range is -128 to +127. The leading bit acts as the sign bit (1 = negative)."},
+      {phrase:'What is hexadecimal and why is it used by programmers?', location:'Number Systems', blank:'Hexadecimal', analysis:'Hexadecimal (base 16) uses digits 0-9 and A-F (A=10, B=11, C=12, D=13, E=14, F=15). Each hex digit represents exactly 4 binary bits (a nibble), so 8 bits = 2 hex digits. This makes hex a compact, human-readable shorthand for binary. Used in: memory addresses, HTML colour codes (#FF0000 = red), MAC addresses, and debugging.'},
+      {phrase:'How do you convert a denary number to binary?', location:'Number Conversion', blank:'division', analysis:'Method: repeatedly divide the denary number by 2, recording the remainder each time, until you reach 0. Then read the remainders from bottom to top. Example: 25 / 2 = 12 r1, 12 / 2 = 6 r0, 6 / 2 = 3 r0, 3 / 2 = 1 r1, 1 / 2 = 0 r1. Reading remainders upward: 11001. Check: 16+8+1 = 25.'},
+    ]
+  },
+  {
+    id:'encoding', title:'Data Encoding — Text, Images & Sound', topic:'Component 1.5',
+    context:`All data in a computer is stored as binary numbers. The challenge is encoding different types of data as binary.\n\nText encoding: ASCII (American Standard Code for Information Interchange) uses 7 bits to represent 128 characters — letters, digits, and symbols. The letter A = 65 (01000001 in binary). Extended ASCII uses 8 bits (256 characters). Unicode uses more bits (UTF-8, UTF-16, UTF-32) to represent characters from all world languages.\n\nImages: a bitmap image is a grid of pixels (picture elements). Each pixel stores a colour value. Bit depth (colour depth) determines how many colours can be represented per pixel — 1-bit = 2 colours, 8-bit = 256 colours, 24-bit = 16.7 million colours. Image file size = pixel width x pixel height x colour depth (in bits) / 8 (for bytes). Resolution is the number of pixels per unit area — higher resolution = more detail but larger file size.\n\nSound: sound waves are analogue — continuous variations in air pressure. To store sound digitally, it must be sampled. Sampling rate = how many times per second the wave amplitude is measured (Hz). Bit depth = how many bits per sample. Higher sample rate and bit depth = better quality but larger file size. File size = sample rate x bit depth x duration (seconds).`,
+    quotes: [
+      {phrase:'What is ASCII? What are its limitations?', location:'Text Encoding', blank:'ASCII', analysis:"ASCII (American Standard Code for Information Interchange) assigns a unique 7-bit binary code to each of 128 characters: A-Z, a-z, 0-9, punctuation, and control characters. A = 65, a = 97, 0 = 48. Limitation: only 128 characters — sufficient for English but not for accented characters, non-Latin scripts (Chinese, Arabic, Greek etc.), or emoji. This problem is solved by Unicode."},
+      {phrase:'What is Unicode and why was it developed?', location:'Text Encoding', blank:'Unicode', analysis:'Unicode is a universal character encoding standard that can represent characters from virtually all world writing systems — over 140,000 characters. UTF-8 (the most common implementation) is backward compatible with ASCII, using 1 byte for ASCII characters and up to 4 bytes for others. Unicode solved the problem of encoding non-Latin scripts and made global software practical.'},
+      {phrase:'How is the file size of a bitmap image calculated?', location:'Image Encoding', blank:'Pixel', analysis:'Bitmap image file size (in bits) = image width (pixels) x image height (pixels) x colour depth (bits per pixel). To convert to bytes, divide by 8. Example: a 100x100 pixel image with 24-bit colour depth = 100 x 100 x 24 = 240,000 bits = 30,000 bytes = ~29.3 KB. Higher resolution and greater colour depth both increase quality and file size.'},
+      {phrase:'What is colour depth and how does it affect image quality and file size?', location:'Image Encoding', blank:'Colour', analysis:'Colour depth (bit depth) is the number of bits used to store the colour of each pixel. 1-bit = 2 colours (black/white); 8-bit = 256 colours; 24-bit (true colour) = 2^24 = 16,777,216 colours. Higher colour depth = more realistic images but larger files. Increasing colour depth from 8-bit to 24-bit triples the file size.'},
+      {phrase:'What is sample rate? How does it affect sound quality and file size?', location:'Sound Encoding', blank:'Sample', analysis:'Sample rate is the number of times per second the amplitude of a sound wave is measured and recorded as a binary number, measured in Hz. CD audio uses 44,100 Hz (44.1 kHz). A higher sample rate captures more detail of the original wave, producing better quality — but also a larger file. File size (bits) = sample rate x bit depth x number of channels x duration (seconds).'},
+      {phrase:'What is the difference between lossy and lossless compression?', location:'Data Compression', blank:'compression', analysis:'Lossless compression (PNG, ZIP, FLAC) reduces file size without losing any data — the original can be perfectly reconstructed. It works by removing redundancy. Lossy compression (JPEG, MP3, MP4) achieves greater size reduction by permanently discarding some data — the original cannot be perfectly recovered and quality is reduced. Lossy is used where some quality loss is acceptable (photos, music, video).'},
+    ]
+  },
+  {
+    id:'databases', title:'Databases & Data Structures', topic:'Component 1.5 / 2.2',
+    context:`A database is an organised collection of structured data stored electronically. A relational database organises data into tables (relations) with rows (records) and columns (fields). Each record is uniquely identified by a primary key.\n\nSQL (Structured Query Language) is used to create and query relational databases. Key SQL commands: SELECT retrieves data, FROM specifies the table, WHERE filters records, ORDER BY sorts results, INSERT INTO adds new records, UPDATE modifies records, DELETE removes records.\n\nData structures organise data in memory. Key structures in OCR J277: Arrays (fixed-size, same data type, accessed by index), Queues (FIFO — First In First Out), Stacks (LIFO — Last In First Out), Dictionaries (key-value pairs, fast lookup by key).`,
+    quotes: [
+      {phrase:'What is a primary key? What is a foreign key?', location:'Databases', blank:'Primary', analysis:'A primary key is a field that uniquely identifies each record in a table — no two records can share the same primary key, and it cannot be empty (null). A foreign key is a field in one table that references the primary key of another table, establishing a relationship (link) between the two tables. This is the basis of relational databases.'},
+      {phrase:'Write a SQL query to select all students over 16, sorted by name.', location:'SQL', blank:'SELECT', analysis:"SELECT name, age FROM students WHERE age > 16 ORDER BY name; — this retrieves the name and age columns from the students table, filters to include only records where age is greater than 16, and sorts the results alphabetically by name. SQL keywords are not case-sensitive, but data values may be."},
+      {phrase:'What is an array? How are elements accessed?', location:'Data Structures', blank:'index', analysis:'An array stores a fixed number of elements of the same data type in order. Elements are accessed by index (position), usually starting at 0. Example: scores[0] gets the first element. Arrays are very fast for reading/writing by index (O(1)) but slow for inserting or deleting elements in the middle, as all subsequent elements must shift.'},
+      {phrase:'What is a stack? Name its operations and give a real-world use.', location:'Data Structures', blank:'LIFO', analysis:'A stack is a Last In, First Out (LIFO) structure — the last item added is the first removed (like a pile of plates). Operations: push (add to top), pop (remove from top), peek (view top without removing). Real-world uses: the CPU call stack for function calls; browser back button history; undo functionality in applications.'},
+      {phrase:'What is a queue? Name its operations and give a real-world use.', location:'Data Structures', blank:'FIFO', analysis:'A queue is a First In, First Out (FIFO) structure — the first item added is the first removed (like a checkout queue). Operations: enqueue (add to back), dequeue (remove from front). Real-world uses: print spooling (print jobs processed in order); CPU process scheduling; handling network packets in order.'},
+      {phrase:'What is a dictionary (hash map) and when would you use one?', location:'Data Structures', blank:'key-value', analysis:'A dictionary stores data as key-value pairs — each unique key maps to a value. Lookup by key is very fast on average (O(1)). Example: student = {"name": "Alice", "age": 17, "grade": "A"}. Use a dictionary when you need to look up values by a meaningful identifier (like a name or ID) rather than a numeric position. Used extensively in Python.'},
+    ]
+  },
+];
+
+// ═══════════════════════════════════════════════════════
+//  DATA — ALGORITHMS & PROGRAMMING
+// ═══════════════════════════════════════════════════════
+const ALGORITHMS = [
+  {
+    id:'algorithms-search', title:'Searching & Sorting Algorithms', topic:'Component 2.1',
+    context:`An algorithm is a step-by-step set of instructions for solving a problem. Algorithm efficiency is measured using Big O notation — how execution time or memory usage grows as the input size (n) grows.\n\nSearching algorithms: Linear search checks each element one by one from the start — works on unsorted lists, O(n). Binary search repeatedly halves the search space — requires a sorted list, O(log n), much faster for large lists.\n\nSorting algorithms: Bubble sort repeatedly compares adjacent pairs, swapping if out of order — O(n^2), simple but inefficient. Merge sort divides the list in half, recursively sorts each half, then merges — O(n log n), efficient for large lists. Insertion sort builds a sorted list one element at a time — O(n^2) worst case but O(n) for nearly-sorted data.\n\nAlgorithm efficiency matters because a poorly chosen algorithm on a large dataset can be thousands of times slower than an efficient one.`,
+    quotes: [
+      {phrase:'How does linear search work? What is its time complexity and when should it be used?', location:'Searching Algorithms', blank:'Linear', analysis:'Linear search starts at the first element and checks each one in turn until the target is found or the list is exhausted. Time complexity: O(n) — in the worst case, every element must be checked. It works on any list, sorted or unsorted. Use it for small lists or unsorted data where binary search is not possible.'},
+      {phrase:'How does binary search work? What is its time complexity and key requirement?', location:'Searching Algorithms', blank:'Binary', analysis:'Binary search requires a sorted list. It compares the target to the middle element: if equal, done; if target is less, discard the right half; if greater, discard the left half. Repeat on the remaining half. Time complexity: O(log n). Finding one item in 1,000,000 elements takes at most 20 comparisons. Far faster than linear search on large sorted data.'},
+      {phrase:'Describe how bubble sort works and state its time complexity.', location:'Sorting Algorithms', blank:'adjacent', analysis:"Bubble sort makes repeated passes through a list, comparing adjacent pairs and swapping them if they're in the wrong order. After each pass, the largest unsorted element 'bubbles' to its correct position. Passes continue until no swaps occur. Time complexity: O(n^2) — very inefficient for large lists. Simple to implement and understand; suitable only for small or nearly-sorted datasets."},
+      {phrase:'Describe how merge sort works. Why is it better than bubble sort for large lists?', location:'Sorting Algorithms', blank:'Merge', analysis:'Merge sort uses divide-and-conquer: recursively split the list in half until sublists contain one element (already sorted), then repeatedly merge pairs of sublists in sorted order. Time complexity: O(n log n) — significantly more efficient than bubble sort (O(n^2)) for large datasets. Drawback: requires additional memory for the merged sublists. Always performs at O(n log n) regardless of input order.'},
+      {phrase:"What does Big O notation measure? What does O(n^2) mean compared to O(log n)?", location:'Algorithm Efficiency', blank:'scales', analysis:"Big O notation describes how an algorithm's time or memory requirements grow as input size n increases. O(1) = constant time. O(log n) = logarithmic — very efficient, grows slowly (binary search). O(n) = linear (linear search). O(n log n) = merge sort. O(n^2) = quadratic — inefficient for large n (bubble/insertion sort worst case). O(n^2) means doubling n quadruples the work; O(log n) means doubling n only adds one step."},
+      {phrase:'How does insertion sort work? When is it particularly efficient?', location:'Sorting Algorithms', blank:'Insertion', analysis:"Insertion sort builds a sorted list one element at a time. It takes each new element and inserts it into the correct position among the already-sorted elements, shifting others along. Time complexity: O(n^2) worst case, but O(n) for nearly-sorted data — making it very efficient when input is almost in order. Simple to implement, uses minimal extra memory."},
+    ]
+  },
+  {
+    id:'programming', title:'Programming Concepts', topic:'Component 2.2',
+    context:`Programming is the process of writing instructions that a computer can execute. Key concepts: Variables (named storage locations whose value can change) vs Constants (fixed value that cannot change). Data types: integer, float/real, string, boolean, character. Control structures: Sequence (instructions in order), Selection (if/elif/else), Iteration (for and while loops). Subroutines: Functions (return a value) and Procedures (do not return a value). Local variables exist only within the subroutine they are declared in; global variables are accessible everywhere.`,
+    quotes: [
+      {phrase:'What is the difference between a variable and a constant?', location:'Programming Basics', blank:'Variable', analysis:"A variable is a named storage location whose value can be read and changed during program execution. A constant is also a named storage location, but its value is set once and never changes. Constants make code more readable (e.g., MAX_SPEED = 100 is clearer than using 100 everywhere) and safer — accidentally changing a constant causes an error, whereas accidentally changing a variable does not."},
+      {phrase:'What are the three main control structures in programming?', location:'Control Structures', blank:'Selection', analysis:'1. Sequence: instructions execute one after another in order — the default. 2. Selection (branching): if/elif/else statements execute different code blocks depending on whether conditions are True or False. 3. Iteration (loops): for loops repeat a fixed number of times; while loops repeat as long as a condition remains True. These three structures are sufficient to write any algorithm.'},
+      {phrase:'What is the difference between a for loop and a while loop?', location:'Control Structures', blank:'Iteration', analysis:"A for loop is used when the number of iterations is known in advance: for i in range(10): runs exactly 10 times. A while loop repeats as long as a condition is True: while password != correct: — the number of iterations is not known in advance. Use for loops for counting/iterating over sequences; use while loops for input validation, waiting for events, or indefinite repetition."},
+      {phrase:'What is the difference between a function and a procedure? Give one benefit of using subroutines.', location:'Subroutines', blank:'Function', analysis:'A function performs a task and returns a value using the return statement. A procedure (void function) performs a task but does not return a value. Benefits of subroutines: modularity (each task in its own named block); reusability (write once, call many times); easier testing (test each subroutine independently); improved readability.'},
+      {phrase:'What is the difference between a local and a global variable?', location:'Variable Scope', blank:'Local', analysis:"A local variable is declared inside a subroutine and only exists within it — it goes out of scope when the subroutine ends. A global variable is declared outside all subroutines and is accessible everywhere. Best practice: use local variables wherever possible, as they prevent different parts of a program from accidentally interfering with each other's data (a common source of bugs)."},
+      {phrase:'What is decomposition? How does it relate to abstraction?', location:'Computational Thinking', blank:'Decomposition', analysis:"Decomposition is breaking a complex problem into smaller, manageable sub-problems that can be solved independently. Abstraction is removing unnecessary detail to focus on what's essential. Together they are key computational thinking skills: decompose the problem into parts, then abstract away irrelevant detail within each part. Other key skills: pattern recognition (spotting similarities) and algorithm design (creating step-by-step solutions)."},
+    ]
+  },
+  {
+    id:'programming-advanced', title:'Programming — Advanced Concepts', topic:'Component 2.2',
+    context:`Advanced programming topics for OCR J277: String manipulation (indexing, slicing, concatenation, len(), upper/lower). File handling: open() with modes r (read), w (write/overwrite), a (append). Exception handling (try/except) handles runtime errors gracefully. Input validation checks data is the correct type and range. Testing: white box (tester sees source code, tests internal logic) vs black box (tester tests inputs/outputs without seeing code). Trace tables manually track variable values step by step through code.`,
+    quotes: [
+      {phrase:"In Python, what does 'Hello'[1:4] return? What does len('Hello') return?", location:'String Handling', blank:'concatenation', analysis:"'Hello'[1:4] returns 'ell' — slicing from index 1 up to (but not including) index 4. 'Hello'[0] = 'H' (strings are zero-indexed). len('Hello') returns 5. Concatenation joins strings: 'Hello' + ' ' + 'World' = 'Hello World'. To join a string and integer: 'Age: ' + str(17). String methods: .upper(), .lower(), .find(), .replace()."},
+      {phrase:'What is exception handling? Write a try/except example.', location:'Exception Handling', blank:'except', analysis:"Exception handling prevents a program from crashing when a runtime error occurs. Code that might fail goes in the try block; if an error occurs, execution jumps to the except block. Example: try: x = int(input('Enter a number: ')) except ValueError: print('That is not a number.'). Without this, entering text when an integer is expected would crash the program."},
+      {phrase:'What is input validation? Name three types.', location:'Robust Programming', blank:'validation', analysis:'Input validation checks that user input meets required criteria before being processed. Types: (1) Type check — is the input the correct data type (e.g., integer, not string)? (2) Range check — is the value within acceptable bounds (e.g., 1-100)? (3) Presence check — has anything been entered (is the field non-empty)? (4) Length check — is the input the right length (e.g., 8-character password minimum)? Validation prevents errors and security vulnerabilities.'},
+      {phrase:'What is the difference between white box and black box testing?', location:'Testing', blank:'White', analysis:"White box (structural) testing: the tester has access to the source code and designs test cases to cover every branch, loop, and path through the code. It checks that the internal logic is correct. Black box testing: the tester has no knowledge of the internal code — they test only inputs and expected outputs. It checks that the program behaves correctly from the user's perspective. Both are needed for thorough testing."},
+      {phrase:'What is a trace table and how is it used?', location:'Testing & Debugging', blank:'Trace', analysis:"A trace table manually simulates code execution to track how variables change at each step. You draw a table with a column for each variable (and any output), then work through the code line by line, recording each variable's value as it changes. Used to: find logic bugs, understand unfamiliar code, and verify an algorithm works correctly. A common exam question — you must follow the code precisely."},
+      {phrase:'What is abstraction? Give a programming example.', location:'Computational Thinking', blank:'Abstraction', analysis:"Abstraction is removing unnecessary detail to focus on what's essential for a given task. A programming example: when you call print('Hello'), you don't need to know how print() converts characters to pixels on screen — that complexity is hidden. A function is an abstraction — you use it by name without knowing its implementation. Another example: a map abstracts the real world by omitting irrelevant details and keeping only what's needed."},
+    ]
+  },
+];
+
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let currentCat = 'systems';
+let sidebarOpen = false;
+const catStates = { systems: true, networks: true, data: true, algorithms: true };
+
+function getTexts(cat){
+  return cat==='systems'?SYSTEMS : cat==='networks'?NETWORKS : cat==='data'?DATA : ALGORITHMS;
+}
+
+// ═══════════════════════════════════════════════════════
+//  SIDEBAR
+// ═══════════════════════════════════════════════════════
+function toggleSidebar(){
+  sidebarOpen = !sidebarOpen;
+  document.getElementById('sidebar').classList.toggle('open', sidebarOpen);
+  document.getElementById('sidebar-overlay').classList.toggle('show', sidebarOpen);
+}
+function closeSidebar(){
+  sidebarOpen = false;
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+}
+function toggleCat(cat){
+  catStates[cat] = !catStates[cat];
+  const body = document.getElementById('cat-'+cat);
+  const btn = document.getElementById('toggle-'+cat);
+  body.style.maxHeight = catStates[cat] ? body.scrollHeight+'px' : '0';
+  btn.classList.toggle('collapsed', !catStates[cat]);
+}
+
+// ═══════════════════════════════════════════════════════
+//  NAV
+// ═══════════════════════════════════════════════════════
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sb-home')?.classList.toggle('active', name==='home');
+  document.getElementById('sb-papers')?.classList.toggle('active', name==='papers');
+  window.scrollTo(0,0);
+  if(name==='flashcards'){ buildTabs('fc-tabs',currentCat,'initFC'); initFC(0); }
+  if(name==='fill')      { buildTabs('fib-tabs',currentCat,'initFib'); initFib(0); }
+  if(name==='notes')     { buildTabs('notes-tabs',currentCat,'renderNotes'); renderNotes(0); }
+}
+function navTo(name){ showView(name); closeSidebar(); }
+function navMode(view, cat){
+  currentCat = cat;
+  syncCatBtns(view==='flashcards'?'fc':view==='fill'?'fib':'notes', cat);
+  showView(view);
+  closeSidebar();
+}
+
+function buildTabs(cid, cat, cbName){
+  const texts = getTexts(cat);
+  document.getElementById(cid).innerHTML = texts.map((t,i)=>
+    `<button class="tab ${i===0?'active':''}" onclick="tabClick('${cid}','${cat}',${i},'${cbName}')">${t.title}</button>`
+  ).join('');
+}
+function tabClick(cid,cat,idx,cbName){
+  document.getElementById(cid).querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===idx));
+  ({initFC,initFib,renderNotes})[cbName](idx);
+}
+function syncCatBtns(prefix, cat){
+  ['systems','networks','data','algorithms'].forEach(c=>{
+    const el = document.getElementById(prefix+'-cat-'+c);
+    if(el) el.classList.toggle('active', c===cat);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  CAT SWITCHERS
+// ═══════════════════════════════════════════════════════
+function fcSetCat(cat){ currentCat=cat; syncCatBtns('fc',cat); buildTabs('fc-tabs',cat,'initFC'); initFC(0); }
+function fibSetCat(cat){ currentCat=cat; syncCatBtns('fib',cat); buildTabs('fib-tabs',cat,'initFib'); initFib(0); }
+function notesSetCat(cat){ currentCat=cat; syncCatBtns('notes',cat); buildTabs('notes-tabs',cat,'renderNotes'); renderNotes(0); }
+
+// ═══════════════════════════════════════════════════════
+//  QUEUE HELPERS
+// ═══════════════════════════════════════════════════════
+function queueInsertLater(queue, idx, item){
+  const insertAt = Math.min(idx + 3, queue.length);
+  const next = [...queue];
+  next.splice(insertAt, 0, {...item, _forgot:(item._forgot||0)+1});
+  return next;
+}
+function sessionDoneHTML(totalSeen, forgotCount, retryFn){
+  return `<div style="text-align:center;padding:3rem 1rem">
+    <div style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--text);margin-bottom:0.5rem">Session complete</div>
+    <div style="font-size:0.88rem;color:var(--muted);margin-bottom:1.5rem">
+      ${forgotCount===0
+        ? 'You remembered everything — great work!'
+        : `${totalSeen - forgotCount} remembered &nbsp;·&nbsp; ${forgotCount} needed extra practice`}
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="${retryFn}">Try again</button>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  FLASHCARDS
+// ═══════════════════════════════════════════════════════
+let fcCat='systems', fcPoem=0, fcIdx=0, fcQueue=[], fcFlipped=false, fcTotal=0, fcForgot=0;
+function initFC(pi){
+  fcCat=currentCat;
+  const texts=getTexts(fcCat);
+  fcPoem=pi!==undefined?pi:fcPoem;
+  fcQueue=shuffle(texts[fcPoem].quotes.map((q,i)=>({...q,_i:i,_forgot:0})));
+  fcTotal=fcQueue.length; fcForgot=0;
+  fcIdx=0; fcFlipped=false; renderFC();
+}
+function renderFC(){
+  const el=document.getElementById('fc-content');
+  if(!fcQueue.length){el.innerHTML=sessionDoneHTML(fcTotal,fcForgot,`initFC(${fcPoem})`);return;}
+  const text=getTexts(fcCat)[fcPoem];
+  const q=fcQueue[fcIdx];
+  const remaining=fcQueue.length;
+  const pct=Math.max(0,Math.round((1-remaining/fcTotal)*100));
+  const forgotTag=q._forgot>0?`<span class="badge" style="background:rgba(220,38,38,0.1);color:var(--red);border-color:rgba(220,38,38,0.25);font-size:0.65rem">↩ repeated</span>`:'';
+  el.innerHTML=`
+    <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+    <div class="counter">${remaining} remaining — ${esc(text.title)} ${forgotTag}</div>
+    <div class="fc-shell">
+      <div class="fc-inner ${fcFlipped?'flipped':''}" id="fc-card" onclick="fcFlip()">
+        <div class="fc-face fc-front">
+          <div style="display:flex;flex-wrap:wrap;gap:0.35rem;justify-content:center;margin-bottom:0.75rem">
+            <span class="badge badge-blue">${esc(text.title)}</span>
+            <span class="badge">${esc(q.location)}</span>
+          </div>
+          <div class="fc-phrase" style="font-family:'Inter',sans-serif;font-style:normal;font-size:1rem;font-weight:500;line-height:1.55">${esc(q.phrase)}</div>
+          <div class="fc-hint">Tap to reveal answer</div>
+        </div>
+        <div class="fc-face fc-back">
+          <div class="fc-back-content">
+            <div class="fc-label">Question</div>
+            <div class="fc-value" style="color:var(--muted);font-size:0.78rem;margin-bottom:0.75rem">${esc(q.phrase)}</div>
+            <div class="fc-label">Answer</div>
+            <div class="fc-value">${esc(q.analysis)}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-actions">
+      <button class="btn btn-wrong btn-sm" onclick="fcAnswer(false)">✗ Forgot</button>
+      <button class="btn btn-correct btn-sm" onclick="fcAnswer(true)">✓ Remembered</button>
+    </div>`;
+}
+function fcFlip(){fcFlipped=!fcFlipped;document.getElementById('fc-card').classList.toggle('flipped',fcFlipped);}
+function fcAnswer(known){
+  const q=fcQueue[fcIdx];
+  if(known){ fcQueue.splice(fcIdx,1); if(fcIdx>=fcQueue.length)fcIdx=0; }
+  else { fcForgot++; fcQueue.splice(fcIdx,1); fcQueue=queueInsertLater(fcQueue,fcIdx,q); if(fcIdx>=fcQueue.length)fcIdx=0; }
+  fcFlipped=false; renderFC();
+}
+
+// ═══════════════════════════════════════════════════════
+//  FILL IN BLANK
+// ═══════════════════════════════════════════════════════
+let fibCat='systems', fibPoem=0, fibIdx=0, fibQueue=[], fibTotal=0, fibForgot=0;
+function initFib(pi){
+  fibCat=currentCat;
+  const texts=getTexts(fibCat);
+  fibPoem=pi!==undefined?pi:fibPoem;
+  fibQueue=shuffle(texts[fibPoem].quotes.map((q,i)=>({...q,_i:i,_forgot:0})));
+  fibTotal=fibQueue.length; fibForgot=0;
+  fibIdx=0; renderFib();
+}
+function renderFib(){
+  const el=document.getElementById('fib-content');
+  if(!fibQueue.length){el.innerHTML=sessionDoneHTML(fibTotal,fibForgot,`initFib(${fibPoem})`);return;}
+  const text=getTexts(fibCat)[fibPoem];
+  const q=fibQueue[fibIdx];
+  const remaining=fibQueue.length;
+  const pct=Math.max(0,Math.round((1-remaining/fibTotal)*100));
+  const blankWord=(q.blank||'').toLowerCase();
+  const re=new RegExp('\\b('+blankWord.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')\\b','gi');
+  const displayPhrase=q.phrase.replace(re,`<input class="blank" data-answer="${blankWord}" size="${Math.max(blankWord.length+1,6)}" placeholder="${'_'.repeat(blankWord.length)}" oninput="checkFib()" autocomplete="off" spellcheck="false">`);
+  const forgotTag=q._forgot>0?`<span class="badge" style="background:rgba(220,38,38,0.1);color:var(--red);border-color:rgba(220,38,38,0.25);font-size:0.65rem">↩ repeated</span>`:'';
+  el.innerHTML=`
+    <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+    <div class="counter">${remaining} remaining — ${esc(text.title)} ${forgotTag}</div>
+    <div class="card">
+      <div style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.65rem;align-items:center">
+        <span class="badge badge-blue">${esc(text.title)}</span>
+        <span class="badge">${esc(q.location)}</span>
+      </div>
+      <div class="fib-phrase">${displayPhrase}</div>
+      <div class="result-banner" id="fib-result"></div>
+      <div class="analysis-reveal" id="fib-analysis">
+        <div class="al">Explanation</div>
+        <p>${esc(q.analysis)}</p>
+      </div>
+    </div>
+    <div class="fc-actions" style="margin-top:0.85rem" id="fib-btns">
+      <button class="btn btn-ghost btn-sm" onclick="fibReveal()">Reveal</button>
+    </div>`;
+}
+function checkFib(){
+  const inputs=[...document.querySelectorAll('.blank')];
+  if(!inputs.length) return;
+  const allCorrect=inputs.every(i=>i.value.trim().toLowerCase()===i.dataset.answer.toLowerCase());
+  const allFilled=inputs.every(i=>i.value.trim());
+  if(allFilled&&allCorrect){
+    inputs.forEach(i=>i.classList.add('correct'));
+    const r=document.getElementById('fib-result');
+    r.className='result-banner ok'; r.textContent='✓ Correct!';
+    document.getElementById('fib-analysis').classList.add('visible');
+    showFibButtons();
+  }
+}
+function fibReveal(){
+  document.querySelectorAll('.blank').forEach(i=>{i.value=i.dataset.answer;i.classList.add('revealed');});
+  const r=document.getElementById('fib-result');
+  r.className='result-banner no'; r.textContent='Revealed — study this one';
+  document.getElementById('fib-analysis').classList.add('visible');
+  showFibButtons();
+}
+function showFibButtons(){
+  const btns=document.getElementById('fib-btns');
+  if(!btns) return;
+  btns.innerHTML=`<button class="btn btn-wrong btn-sm" onclick="fibAnswer(false)">✗ Forgot</button><button class="btn btn-correct btn-sm" onclick="fibAnswer(true)">✓ Remembered</button>`;
+}
+function fibAnswer(known){
+  const q=fibQueue[fibIdx];
+  if(known){ fibQueue.splice(fibIdx,1); if(fibIdx>=fibQueue.length)fibIdx=0; }
+  else { fibForgot++; fibQueue.splice(fibIdx,1); fibQueue=queueInsertLater(fibQueue,fibIdx,q); if(fibIdx>=fibQueue.length)fibIdx=0; }
+  renderFib();
+}
+
+// ═══════════════════════════════════════════════════════
+//  NOTES
+// ═══════════════════════════════════════════════════════
+function renderNotes(pi){
+  const cat=currentCat;
+  const text=getTexts(cat)[pi!==undefined?pi:0];
+  document.getElementById('notes-content').innerHTML=`
+    <div class="ctx-box">
+      <h3>${esc(text.title)} <span style="font-size:0.78rem;font-style:italic;color:var(--muted)">— ${esc(text.topic)}</span></h3>
+      ${text.context.split('\n\n').map(p=>`<p>${esc(p)}</p>`).join('')}
+    </div>
+    ${text.quotes&&text.quotes.length?`
+    <div class="section-label">Key Terms &amp; Concepts</div>
+    <div class="notes-list">
+      ${text.quotes.map(q=>`
+        <div class="note">
+          <div class="n-phrase">${esc(q.phrase)}</div>
+          <div class="n-src">${esc(q.location)}</div>
+          <div class="n-analysis">${esc(q.analysis)}</div>
+        </div>
+      `).join('')}
+    </div>`:''}`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function shuffle(a){return [...a].sort(()=>Math.random()-0.5);}
+
+function toggleDark(){
+  const dark=document.body.classList.toggle('dark');
+  document.getElementById('dark-toggle').textContent=dark?'🌙':'☀️';
+  localStorage.setItem('csrev_dark',dark?'1':'0');
+}
+if(localStorage.getItem('csrev_dark')==='1'){
+  document.body.classList.add('dark');
+  document.getElementById('dark-toggle').textContent='🌙';
+}
+
+document.querySelectorAll('.sb-cat-body').forEach(el=>{
+  el.style.maxHeight = el.scrollHeight+'px';
+});
+</script>
+</body>
+</html>
